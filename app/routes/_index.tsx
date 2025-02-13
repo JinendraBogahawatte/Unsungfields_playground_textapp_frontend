@@ -107,7 +107,7 @@ export default function Playground() {
 
         <form onSubmit={handleSubmit} className="mt-4 flex flex-col">
           <textarea className="border p-2 rounded w-full" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Type your message..." />
-          <div className="grid grid-cols-2 gap-4 mt-4">
+          <div className="grid grid-cols-1 gap-4 mt-4">
             <label>Temperature:<input type="range" min="0" max="2" step="0.1" value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} /></label>
             <label>Max Tokens:<input type="number" min="1" max="4096" value={maxTokens} onChange={(e) => setMaxTokens(Number(e.target.value))} /></label>
             <label>Stream:<input type="checkbox" checked={stream} onChange={() => setStream(!stream)} /></label>
