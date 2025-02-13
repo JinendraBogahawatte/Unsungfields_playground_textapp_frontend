@@ -20,6 +20,9 @@ const models = [
   "llama-3.2-90b-vision-preview",
 ];
 
+// ✅ Updated Backend API URL
+const API_URL = "https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/";
+
 export default function Index() {
   const [selectedModel, setSelectedModel] = useState(models[0]);
   const [prompt, setPrompt] = useState("");
@@ -41,7 +44,7 @@ export default function Index() {
     setLoading(true);
     setResponse("");
 
-    const res = await fetch("https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/", {
+    const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -65,16 +68,14 @@ export default function Index() {
         setResponse("Error: Streaming not supported.");
         return;
       }
-
       const decoder = new TextDecoder();
       let fullText = "";
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
 
-        // ✅ Extract and format streaming response
+        // ✅ Proper streaming response parsing
         try {
           const parsedChunk = JSON.parse(chunk);
           if (parsedChunk.choices && parsedChunk.choices[0]?.delta?.content) {
@@ -113,11 +114,11 @@ export default function Index() {
 
     switch (codeFormat) {
       case "python":
-        return `import requests\n\nurl = "https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/"\nheaders = {"Content-Type": "application/json"}\npayload = ${payload}\n\nresponse = requests.post(url, json=payload, headers=headers)\nprint(response.json())`;
+        return `import requests\n\nurl = "${API_URL}"\nheaders = {"Content-Type": "application/json"}\npayload = ${payload}\n\nresponse = requests.post(url, json=payload, headers=headers)\nprint(response.json())`;
       case "javascript":
-        return `fetch("https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/", {\n  method: "POST",\n  headers: {"Content-Type": "application/json"},\n  body: JSON.stringify(${payload})\n}).then(res => res.json()).then(console.log);`;
+        return `fetch("${API_URL}", {\n  method: "POST",\n  headers: {"Content-Type": "application/json"},\n  body: JSON.stringify(${payload})\n}).then(res => res.json()).then(console.log);`;
       case "curl":
-        return `curl -X POST "https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/" -H "Content-Type: application/json" -d '${payload}'`;
+        return `curl -X POST "${API_URL}" -H "Content-Type: application/json" -d '${payload}'`;
       case "json":
         return payload;
       default:
@@ -144,26 +145,45 @@ export default function Index() {
 
       {/* Middle Section */}
       <div className="flex-1 flex flex-col p-6">
-        <h2 className="text-xl font-bold">Playground</h2>
-        <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} className="border p-2 rounded">
-          {models.map((model) => (
-            <option key={model} value={model}>{model}</option>
-          ))}
-        </select>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold">Playground</h2>
+          <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} className="border p-2 rounded">
+            {models.map((model) => (
+              <option key={model} value={model}>{model}</option>
+            ))}
+          </select>
+        </div>
 
         {/* Response Panel */}
         <div className="flex-1 bg-white shadow-md rounded p-4 mt-4">
-          {response ? <div className="p-4 border rounded bg-gray-100">{response}</div> : <p className="text-gray-400 text-center">Enter a prompt to get started.</p>}
+          {response ? (
+            <div className="p-4 border rounded bg-gray-100">{response}</div>
+          ) : (
+            <p className="text-gray-400 text-center">Enter a prompt to get started.</p>
+          )}
         </div>
 
-        {/* Submit Button */}
-        <form onSubmit={handleSubmit} className="mt-4">
+        {/* Input & Controls */}
+        <form onSubmit={handleSubmit} className="mt-4 flex flex-col">
           <textarea className="border p-2 rounded w-full" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Type your message..." />
-          <button type="submit" className="mt-4 p-2 bg-blue-500 text-white rounded" disabled={loading}>{loading ? "Generating..." : "Submit"}</button>
-        </form>
 
-        {/* Code Snippet View */}
-        {viewCode && <div className="mt-2 p-4 bg-gray-900 text-white rounded font-mono"><pre>{generateCodeSnippet()}</pre></div>}
+          {/* View Code Button */}
+          <button type="button" onClick={() => setViewCode(!viewCode)} className="mt-2 p-2 bg-gray-500 text-white rounded">
+            {viewCode ? "Hide Code" : "View Code"}
+          </button>
+
+          {/* Code Snippet View */}
+          {viewCode && (
+            <div className="mt-2 p-4 bg-gray-900 text-white rounded font-mono">
+              <pre>{generateCodeSnippet()}</pre>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <button type="submit" className="mt-4 p-2 bg-blue-500 text-white rounded" disabled={loading}>
+            {loading ? "Generating..." : "Submit"}
+          </button>
+        </form>
       </div>
     </div>
   );
