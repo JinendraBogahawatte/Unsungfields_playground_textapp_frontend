@@ -141,18 +141,39 @@ export default function Index() {
           </select>
         </div>
 
-        {/* Response Panel */}
-        <div className="flex-1 bg-white shadow-md rounded p-4 mt-4">
-          {response ? (
-            <div className="p-4 border rounded bg-gray-100">{response}</div>
-          ) : (
-            <p className="text-gray-400 text-center">
-              Enter a prompt to get started.
-            </p>
-          )}
-        </div>
+        {/* View Code Button */}
+        <button
+          onClick={() => setViewCode(!viewCode)}
+          className="mt-2 p-2 bg-gray-500 text-white rounded"
+        >
+          {viewCode ? "Hide Code" : "View Code"}
+        </button>
 
-        {/* Input & Controls */}
+        {/* Code Snippet View */}
+        {viewCode && (
+          <div className="mt-2 p-4 bg-gray-900 text-white rounded font-mono">
+            <pre>
+              {JSON.stringify(
+                {
+                  model: selectedModel,
+                  prompt,
+                  max_tokens: maxTokens,
+                  temperature,
+                  stream,
+                  json_mode: jsonMode,
+                  moderation,
+                  top_p: topP,
+                  seed: seed ? Number(seed) : null,
+                  stop: stopSequence || null,
+                },
+                null,
+                2
+              )}
+            </pre>
+          </div>
+        )}
+
+        {/* Input */}
         <form onSubmit={handleSubmit} className="mt-4 flex flex-col">
           <textarea
             className="border p-2 rounded w-full"
@@ -160,70 +181,6 @@ export default function Index() {
             onChange={(e) => setPrompt(e.target.value)}
             placeholder="Type your message..."
           />
-
-          {/* Parameter Controls */}
-          <div className="mt-4 p-4 bg-white rounded shadow-md">
-            <h3 className="font-bold mb-2">Parameters</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <label className="flex items-center">
-                Temperature:
-                <input
-                  type="range"
-                  min="0"
-                  max="2"
-                  step="0.1"
-                  value={temperature}
-                  onChange={(e) => setTemperature(Number(e.target.value))}
-                  className="ml-2 w-full"
-                />
-                <span className="ml-2">{temperature}</span>
-              </label>
-              <label className="flex items-center">
-                Max Completion Tokens:
-                <input
-                  type="number"
-                  min="1"
-                  max="4096"
-                  value={maxTokens}
-                  onChange={(e) => setMaxTokens(Number(e.target.value))}
-                  className="ml-2 w-16 border p-1 rounded"
-                />
-              </label>
-              <label className="flex items-center">
-                Stream:
-                <input
-                  type="checkbox"
-                  checked={stream}
-                  onChange={() => setStream(!stream)}
-                  className="ml-2"
-                />
-              </label>
-              <label className="flex items-center">
-                JSON Mode:
-                <input
-                  type="checkbox"
-                  checked={jsonMode}
-                  onChange={() => setJsonMode(!jsonMode)}
-                  className="ml-2"
-                />
-              </label>
-              <label className="flex items-center">
-                Top P:
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={topP}
-                  onChange={(e) => setTopP(Number(e.target.value))}
-                  className="ml-2 w-full"
-                />
-                <span className="ml-2">{topP}</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Submit Button */}
           <button
             type="submit"
             className="mt-4 p-2 bg-blue-500 text-white rounded"
@@ -232,6 +189,17 @@ export default function Index() {
             {loading ? "Generating..." : "Submit"}
           </button>
         </form>
+
+        {/* Response Panel */}
+        <div className="bg-white shadow-md rounded p-4 mt-4">
+          {response ? (
+            <div className="p-4 border rounded bg-gray-100">{response}</div>
+          ) : (
+            <p className="text-gray-400 text-center">
+              Enter a prompt to get started.
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );
