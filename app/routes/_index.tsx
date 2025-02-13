@@ -20,7 +20,7 @@ const models = [
   "llama-3.2-90b-vision-preview",
 ];
 
-export default function Playground() {
+export default function Index() {
   const [selectedModel, setSelectedModel] = useState(models[0]);
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState("");
@@ -35,9 +35,8 @@ export default function Playground() {
   const [stopSequence, setStopSequence] = useState("");
   const [viewCode, setViewCode] = useState(false);
   const [codeFormat, setCodeFormat] = useState("python");
-  const [showAdvanced, setShowAdvanced] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setResponse("");
@@ -79,6 +78,7 @@ export default function Playground() {
       const data = await res.json();
       setResponse(data.choices?.[0]?.message?.content || "Error fetching response");
     }
+
     setLoading(false);
   };
 
@@ -109,6 +109,10 @@ export default function Playground() {
         return `curl -X POST "https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/" -H "Content-Type: application/json" -d '${payload}'`;
       case "json":
         return payload;
+      case "java":
+        return `// Java Code Example\nimport java.net.http.HttpClient;\nimport java.net.URI;\nimport java.net.http.HttpRequest;\nimport java.net.http.HttpResponse;\n\nHttpClient client = HttpClient.newHttpClient();\nHttpRequest request = HttpRequest.newBuilder()\n        .uri(new URI("https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/"))\n        .header("Content-Type", "application/json")\n        .POST(HttpRequest.BodyPublishers.ofString(${payload}))\n        .build();\nHttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());\nSystem.out.println(response.body());`;
+      case "c#":
+        return `// C# Example\nusing System;\nusing System.Net.Http;\nusing System.Text;\n\nHttpClient client = new HttpClient();\nvar content = new StringContent(${payload}, Encoding.UTF8, "application/json");\nvar response = await client.PostAsync("https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/", content);\nConsole.WriteLine(await response.Content.ReadAsStringAsync());`;
       default:
         return "";
     }
@@ -116,7 +120,7 @@ export default function Playground() {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* Sidebar */}
+      {/* Left Sidebar */}
       <div className="w-64 bg-white p-4 shadow-md flex flex-col">
         <h1 className="text-lg font-bold mb-4">Unsungfields<span className="text-red-500"> Cloud</span></h1>
         <nav className="flex flex-col gap-3">
@@ -126,82 +130,97 @@ export default function Playground() {
           <a href="#" className="text-gray-600">API Keys</a>
           <a href="#" className="text-gray-600">Settings</a>
         </nav>
+        <div className="mt-auto">
+          <button className="bg-gray-200 p-2 rounded w-full">Personal</button>
+        </div>
       </div>
 
-      {/* Main Section */}
+      {/* Middle Section */}
       <div className="flex-1 flex flex-col p-6">
-        <h2 className="text-xl font-bold">Playground</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-xl font-bold">Playground</h2>
+          <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} className="border p-2 rounded">
+            {models.map((model) => (
+              <option key={model} value={model}>{model}</option>
+            ))}
+          </select>
+        </div>
 
-        {/* Model Dropdown */}
-        <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} className="border p-2 rounded mt-4">
-          {models.map((model) => (
-            <option key={model} value={model}>{model}</option>
-          ))}
-        </select>
+        {/* Response Panel */}
+        <div className="flex-1 bg-white shadow-md rounded p-4 mt-4">
+          {response ? (
+            <div className="p-4 border rounded bg-gray-100">{response}</div>
+          ) : (
+            <p className="text-gray-400 text-center">Enter a prompt to get started.</p>
+          )}
+        </div>
 
-        {/* Form */}
+        {/* Input & Controls */}
         <form onSubmit={handleSubmit} className="mt-4 flex flex-col">
-          {/* Prompt Input */}
           <textarea className="border p-2 rounded w-full" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Type your message..." />
 
-          {/* Parameters Panel */}
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <div className="flex flex-col">
-              <label>Temperature</label>
-              <input type="range" min="0" max="2" step="0.1" value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} />
-            </div>
-            <div className="flex flex-col">
-              <label>Max Completion Tokens</label>
-              <input type="number" min="1" max="4096" value={maxTokens} onChange={(e) => setMaxTokens(Number(e.target.value))} />
-            </div>
-            <div className="flex flex-col">
-              <label>Stream</label>
-              <input type="checkbox" checked={stream} onChange={() => setStream(!stream)} />
-            </div>
-            <div className="flex flex-col">
-              <label>JSON Mode</label>
-              <input type="checkbox" checked={jsonMode} onChange={() => setJsonMode(!jsonMode)} />
+          {/* Parameter Controls */}
+          <div className="mt-4 p-4 bg-white rounded shadow-md">
+            <h3 className="font-bold mb-2">Parameters</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <label className="flex items-center">
+                Temperature:
+                <input type="range" min="0" max="2" step="0.1" value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} className="ml-2 w-full" />
+                <span className="ml-2">{temperature}</span>
+              </label>
+              <label className="flex items-center">
+                Max Completion Tokens:
+                <input type="number" min="1" max="4096" value={maxTokens} onChange={(e) => setMaxTokens(Number(e.target.value))} className="ml-2 w-16 border p-1 rounded" />
+              </label>
+              <label className="flex items-center">
+                Stream:
+                <input type="checkbox" checked={stream} onChange={() => setStream(!stream)} className="ml-2" />
+              </label>
+              <label className="flex items-center">
+                JSON Mode:
+                <input type="checkbox" checked={jsonMode} onChange={() => setJsonMode(!jsonMode)} className="ml-2" />
+              </label>
+              <label className="flex items-center">
+                Top P:
+                <input type="range" min="0" max="1" step="0.01" value={topP} onChange={(e) => setTopP(Number(e.target.value))} className="ml-2 w-full" />
+                <span className="ml-2">{topP}</span>
+              </label>
+              <label className="flex items-center">
+                Seed:
+                <input type="text" value={seed} onChange={(e) => setSeed(e.target.value)} className="ml-2 border p-1 rounded w-24" />
+              </label>
+              <label className="flex items-center">
+                Stop Sequence:
+                <input type="text" value={stopSequence} onChange={(e) => setStopSequence(e.target.value)} className="ml-2 border p-1 rounded w-24" />
+              </label>
             </div>
           </div>
 
-          {/* Advanced Button */}
-          <button type="button" onClick={() => setShowAdvanced(!showAdvanced)} className="mt-2 p-2 bg-gray-500 text-white rounded">Advanced</button>
+          {/* View Code Button */}
+          <button type="button" onClick={() => setViewCode(!viewCode)} className="mt-2 p-2 bg-gray-500 text-white rounded">
+            {viewCode ? "Hide Code" : "View Code"}
+          </button>
 
-          {/* Advanced Settings */}
-          {showAdvanced && (
-            <div className="mt-4 p-4 bg-white rounded shadow-md">
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center">
-                  <label>Moderation</label>
-                  <input type="checkbox" checked={moderation} onChange={() => setModeration(!moderation)} className="ml-2" />
-                </div>
-                <div className="flex items-center">
-                  <label>Top P</label>
-                  <input type="range" min="0" max="1" step="0.01" value={topP} onChange={(e) => setTopP(Number(e.target.value))} />
-                </div>
-                <div className="flex items-center">
-                  <label>Seed</label>
-                  <input type="text" value={seed} onChange={(e) => setSeed(e.target.value)} />
-                </div>
-                <div className="flex items-center">
-                  <label>Stop Sequence</label>
-                  <input type="text" value={stopSequence} onChange={(e) => setStopSequence(e.target.value)} />
-                </div>
-              </div>
+          {/* Code Snippet View */}
+          {viewCode && (
+            <div className="mt-2 p-4 bg-gray-900 text-white rounded font-mono">
+              <select value={codeFormat} onChange={(e) => setCodeFormat(e.target.value)} className="mb-2 p-2 border rounded bg-white text-black">
+                <option value="python">Python</option>
+                <option value="javascript">JavaScript</option>
+                <option value="curl">cURL</option>
+                <option value="json">JSON</option>
+                <option value="java">Java</option>
+                <option value="c#">C#</option>
+              </select>
+              <pre>{generateCodeSnippet()}</pre>
             </div>
           )}
 
           {/* Submit Button */}
-          <button type="submit" className="mt-4 p-2 bg-blue-500 text-white rounded">{loading ? "Generating..." : "Submit"}</button>
+          <button type="submit" className="mt-4 p-2 bg-blue-500 text-white rounded" disabled={loading}>
+            {loading ? "Generating..." : "Submit"}
+          </button>
         </form>
-
-        {/* View Code Button */}
-        {viewCode && (
-          <div className="mt-4 p-4 bg-gray-900 text-white rounded font-mono">
-            <pre>{generateCodeSnippet()}</pre>
-          </div>
-        )}
-        <button type="button" onClick={() => setViewCode(!viewCode)} className="mt-4 p-2 bg-gray-500 text-white rounded">{viewCode ? "Hide Code" : "View Code"}</button>
       </div>
     </div>
   );
