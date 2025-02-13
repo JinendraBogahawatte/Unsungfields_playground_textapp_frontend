@@ -72,7 +72,6 @@ export default function Index() {
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
 
-        // Extract and format streaming response
         try {
           const parsedChunk = JSON.parse(chunk);
           if (parsedChunk.choices && parsedChunk.choices[0]?.delta?.content) {
@@ -89,38 +88,6 @@ export default function Index() {
     }
 
     setLoading(false);
-  };
-
-  const generateCodeSnippet = () => {
-    const payload = JSON.stringify(
-      {
-        model: selectedModel,
-        prompt,
-        max_tokens: maxTokens,
-        temperature,
-        stream,
-        json_mode: jsonMode,
-        moderation,
-        top_p: topP,
-        seed: seed ? Number(seed) : null,
-        stop: stopSequence || null,
-      },
-      null,
-      2
-    );
-
-    switch (codeFormat) {
-      case "python":
-        return `import requests\n\nurl = "https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/"\nheaders = {"Content-Type": "application/json"}\npayload = ${payload}\n\nresponse = requests.post(url, json=payload, headers=headers)\nprint(response.json())`;
-      case "javascript":
-        return `fetch("https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/", {\n  method: "POST",\n  headers: {"Content-Type": "application/json"},\n  body: JSON.stringify(${payload})\n}).then(res => res.json()).then(console.log);`;
-      case "curl":
-        return `curl -X POST "https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/" -H "Content-Type: application/json" -d '${payload}'`;
-      case "json":
-        return payload;
-      default:
-        return "";
-    }
   };
 
   return (
@@ -162,9 +129,6 @@ export default function Index() {
           <label>Stream: <input type="checkbox" checked={stream} onChange={() => setStream(!stream)} /></label>
           <button type="submit" className="mt-4 p-2 bg-blue-500 text-white rounded" disabled={loading}>{loading ? "Generating..." : "Submit"}</button>
         </form>
-
-        {/* Code Snippet View */}
-        {viewCode && <div className="mt-2 p-4 bg-gray-900 text-white rounded font-mono"><pre>{generateCodeSnippet()}</pre></div>}
       </div>
     </div>
   );
