@@ -65,13 +65,16 @@ export default function Index() {
         setResponse("Error: Streaming not supported.");
         return;
       }
+
       const decoder = new TextDecoder();
       let fullText = "";
+
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         const chunk = decoder.decode(value, { stream: true });
 
+        // ✅ Extract and format streaming response
         try {
           const parsedChunk = JSON.parse(chunk);
           if (parsedChunk.choices && parsedChunk.choices[0]?.delta?.content) {
@@ -88,6 +91,38 @@ export default function Index() {
     }
 
     setLoading(false);
+  };
+
+  const generateCodeSnippet = () => {
+    const payload = JSON.stringify(
+      {
+        model: selectedModel,
+        prompt,
+        max_tokens: maxTokens,
+        temperature,
+        stream,
+        json_mode: jsonMode,
+        moderation,
+        top_p: topP,
+        seed: seed ? Number(seed) : null,
+        stop: stopSequence || null,
+      },
+      null,
+      2
+    );
+
+    switch (codeFormat) {
+      case "python":
+        return `import requests\n\nurl = "https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/"\nheaders = {"Content-Type": "application/json"}\npayload = ${payload}\n\nresponse = requests.post(url, json=payload, headers=headers)\nprint(response.json())`;
+      case "javascript":
+        return `fetch("https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/", {\n  method: "POST",\n  headers: {"Content-Type": "application/json"},\n  body: JSON.stringify(${payload})\n}).then(res => res.json()).then(console.log);`;
+      case "curl":
+        return `curl -X POST "https://tiny-tallulah-unsungfields-03d169d3.koyeb.app/generate-text/" -H "Content-Type: application/json" -d '${payload}'`;
+      case "json":
+        return payload;
+      default:
+        return "";
+    }
   };
 
   return (
@@ -121,14 +156,14 @@ export default function Index() {
           {response ? <div className="p-4 border rounded bg-gray-100">{response}</div> : <p className="text-gray-400 text-center">Enter a prompt to get started.</p>}
         </div>
 
-        {/* Parameters Panel */}
-        <form onSubmit={handleSubmit} className="mt-4 flex flex-col bg-white p-4 rounded shadow-md">
-          <h3 className="font-bold mb-2">Parameters</h3>
-          <label>Temperature: <input type="range" min="0" max="2" step="0.1" value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} /></label>
-          <label>Max Completion Tokens: <input type="number" min="1" max="4096" value={maxTokens} onChange={(e) => setMaxTokens(Number(e.target.value))} /></label>
-          <label>Stream: <input type="checkbox" checked={stream} onChange={() => setStream(!stream)} /></label>
+        {/* Submit Button */}
+        <form onSubmit={handleSubmit} className="mt-4">
+          <textarea className="border p-2 rounded w-full" value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Type your message..." />
           <button type="submit" className="mt-4 p-2 bg-blue-500 text-white rounded" disabled={loading}>{loading ? "Generating..." : "Submit"}</button>
         </form>
+
+        {/* Code Snippet View */}
+        {viewCode && <div className="mt-2 p-4 bg-gray-900 text-white rounded font-mono"><pre>{generateCodeSnippet()}</pre></div>}
       </div>
     </div>
   );
